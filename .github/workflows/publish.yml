@@ -1,0 +1,43 @@
+name: Run Tests and Publish Package
+
+on:
+  push:
+    branches:
+      - main 
+  workflow_dispatch:
+
+jobs:
+  test-and-publish:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore MyTelegramBotMediator.sln
+
+    - name: Build Solution
+      run: dotnet build MyTelegramBotMediator.sln --configuration Release --no-restore
+
+    - name: Run Tests
+      run: dotnet test MyTelegramBotMediator.sln --configuration Release --no-build --verbosity normal
+
+    - name: Pack Library
+      run: |
+        dotnet pack src/Telegran.Bot.Mediator/Telegran.Bot.Mediator.csproj \
+          --configuration Release \
+          --no-build \
+          -o out \
+          /p:PackageVersion=1.0.${{ github.run_number }}
+
+    - name: Publish to GitHub Packages
+      run: |
+        dotnet nuget push "out/*.nupkg" \
+          --source "https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json" \
+          --api-key "${{ secrets.GITHUB_TOKEN }}"
