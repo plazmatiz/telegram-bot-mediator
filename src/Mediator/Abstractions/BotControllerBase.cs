@@ -1,6 +1,6 @@
 using Telegram.Bot.Types;
 
-namespace Telegran.Bot.Mediator.Mediator.Abstractions;
+namespace Telegram.Bot.Mediator.Mediator.Abstractions;
 
 /// <summary>
 /// Represents the contextual data of the current Telegram update.

@@ -1,9 +1,8 @@
-using Telegram.Bot;
+using Telegram.Bot.Mediator.Mediator.Abstractions;
+using Telegram.Bot.Mediator.Mediator.Attributes;
 using Telegram.Bot.Types;
-using Telegran.Bot.Mediator.Mediator.Abstractions;
-using Telegran.Bot.Mediator.Mediator.Attributes;
 
-namespace Telegran.Bot.Mediator.Tests;
+namespace Telegram.Bot.Mediator.Tests;
 
 public enum TestState
 {

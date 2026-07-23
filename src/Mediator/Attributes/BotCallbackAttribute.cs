@@ -1,4 +1,4 @@
-namespace Telegran.Bot.Mediator.Mediator.Attributes
+namespace Telegram.Bot.Mediator.Mediator.Attributes
 {
     /// <summary>
     /// Marks a method to handle callback queries. Supports exact match or prefix patterns.

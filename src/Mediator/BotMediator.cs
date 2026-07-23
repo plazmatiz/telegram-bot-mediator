@@ -5,9 +5,9 @@ using Microsoft.Extensions.Logging;
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
-using Telegran.Bot.Mediator.Mediator.Abstractions;
-using Telegran.Bot.Mediator.Mediator.Attributes;
-using Telegran.Bot.Mediator.Mediator.State;
+using Telegram.Bot.Mediator.Mediator.Abstractions;
+using Telegram.Bot.Mediator.Mediator.Attributes;
+using Telegram.Bot.Mediator.Mediator.State;
 
 namespace Telegram.Bot.Mediator;
 

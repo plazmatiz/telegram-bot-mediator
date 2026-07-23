@@ -1,4 +1,4 @@
-namespace Telegran.Bot.Mediator.Mediator.Attributes
+namespace Telegram.Bot.Mediator.Mediator.Attributes
 {
     /// <summary>
     /// Marks a method to handle any plain text input from a user, filtered by a required state.

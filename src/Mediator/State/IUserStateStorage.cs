@@ -1,4 +1,4 @@
-namespace Telegran.Bot.Mediator.Mediator.State
+namespace Telegram.Bot.Mediator.Mediator.State
 {
     /// <summary>
     /// Defines contract for managing user states in the Telegram bot.

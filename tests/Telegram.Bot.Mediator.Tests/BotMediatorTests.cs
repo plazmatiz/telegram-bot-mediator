@@ -1,13 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Telegram.Bot;
+using Telegram.Bot.Mediator.Mediator.State;
 using Telegram.Bot.Types;
-using Telegram.Bot.Types.Enums;
-using Telegran.Bot.Mediator.Mediator.State;
 using Xunit;
 
-namespace Telegran.Bot.Mediator.Tests;
+namespace Telegram.Bot.Mediator.Tests;
 
 public class BotMediatorTests
 {
