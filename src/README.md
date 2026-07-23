@@ -8,6 +8,7 @@ A lightweight mediator library for routing incoming updates in Telegram bots on 
 * **State-Based Routing**: Route commands, plain text, and callback queries to specific handler methods based on the user's current state.
 * **Scoped Dependency Support**: Controllers are registered with a `Scoped` lifetime, allowing safe injection of scoped services (such as Entity Framework's `DbContext`).
 * **Request Context**: Immediate access to Chat ID, User ID, and the original `Update` object via the base controller class.
+* **Built-in Lifecycle Management**: Includes a default background service using long polling to handle incoming updates.
 
 ---
 
@@ -90,45 +91,58 @@ public class RegistrationController : BotControllerBase
 
 ### 3. Register Services in `Program.cs`
 
-Use the `AddTelegramMediator` extension method to register all required services:
+Configure the DI container using the provided extension methods. This registers the mediator, controller instances, and the polling background service.
 
 ```csharp
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
+using Telegram.Bot;
 using Telegram.Bot.Mediator.Extensions;
 
 var builder = Host.CreateApplicationBuilder(args);
 
-// Registers the mediator, default in-memory state storage, and discovers controllers
+// 1. Register the standard TelegramBotClient
+builder.Services.AddSingleton<ITelegramBotClient>(provider => 
+    new TelegramBotClient("YOUR_TELEGRAM_BOT_TOKEN"));
+
+// 2. Register mediator, in-memory state storage, and auto-discover controllers
 builder.Services.AddTelegramMediator<UserState>();
 
-// Add your custom background service or update receiver
-builder.Services.AddHostedService<BotBackgroundService>();
+// 3. Register the default polling service (handles Message and CallbackQuery updates by default)
+builder.Services.AddTelegramBotHostedService<UserState>();
 
 var host = builder.Build();
 host.Run();
 ```
 
-### 4. Pass Incoming Updates to the Mediator
+---
 
-In your update receiver or polling service (e.g., `IUpdateHandler`), pass the incoming `Update` to the `BotMediator`:
+## Custom Lifecycle and Update Customization
+
+The default background service registered via `AddTelegramBotHostedService<TState>` polls for updates with standard configurations (restricted to `UpdateType.Message` and `UpdateType.CallbackQuery`).
+
+If you need to support other update types, utilize Webhooks, or manage the receiver loop differently, you can omit the default background service and build your own.
+
+To route updates manually, inject `BotMediator<TState>` into your custom receiver or controller, and pass incoming updates:
 
 ```csharp
 using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Mediator;
 
-public class UpdateHandler
+public class CustomUpdateReceiver
 {
     private readonly BotMediator<UserState> _mediator;
 
-    public UpdateHandler(BotMediator<UserState> mediator)
+    public CustomUpdateReceiver(BotMediator<UserState> mediator)
     {
         _mediator = mediator;
     }
 
-    public async Task HandleUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken cancellationToken)
+    public async Task ProcessUpdateAsync(ITelegramBotClient botClient, Update update, CancellationToken ct)
     {
-        // The mediator resolves user state, matches the route, and executes the target controller method
-        await _mediator.HandleUpdateAsync(botClient, update, cancellationToken);
+        // Pass the update to the mediator for routing and state-matching execution
+        await _mediator.HandleUpdateAsync(botClient, update, ct);
     }
 }
 ```
@@ -137,9 +151,9 @@ public class UpdateHandler
 
 ## User State Management
 
-By default, the library registers `InMemoryStateStorage<TState>`, which stores states in-memory (resets when the application restarts).
+By default, `AddTelegramMediator<TState>` registers `InMemoryStateStorage<TState>`, which stores states in volatile memory. If your application restarts, all active user states will be lost.
 
-To persist states in a database (such as PostgreSQL, SQL Server, or Redis), implement the `IUserStateStorage<TState>` interface and register your custom implementation in the DI container:
+To persist states in a database (such as PostgreSQL, SQL Server, or Redis), implement the `IUserStateStorage<TState>` interface and register your implementation as a singleton before or after calling `AddTelegramMediator`:
 
 ```csharp
 builder.Services.AddSingleton<IUserStateStorage<UserState>, MyDatabaseStateStorage>();
