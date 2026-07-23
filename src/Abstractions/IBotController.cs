@@ -1,4 +1,4 @@
-namespace Telegram.Bot.Mediator.Mediator.Abstractions;
+namespace Telegram.Bot.Mediator.Abstractions;
 
 /// <summary>
 /// Marker interface to automatically discover bot controllers via reflection.

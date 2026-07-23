@@ -1,5 +1,5 @@
-using Telegram.Bot.Mediator.Mediator.Abstractions;
-using Telegram.Bot.Mediator.Mediator.Attributes;
+using Telegram.Bot.Mediator.Abstractions;
+using Telegram.Bot.Mediator.Attributes;
 using Telegram.Bot.Types;
 
 namespace Telegram.Bot.Mediator.Tests;

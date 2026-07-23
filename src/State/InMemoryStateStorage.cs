@@ -1,6 +1,6 @@
 using System.Collections.Concurrent;
 
-namespace Telegram.Bot.Mediator.Mediator.State
+namespace Telegram.Bot.Mediator.State
 {
     /// <summary>
     /// Thread-safe in-memory storage for user states.

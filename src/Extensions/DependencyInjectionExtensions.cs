@@ -1,6 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
-using Telegram.Bot.Mediator.Mediator.Abstractions;
-using Telegram.Bot.Mediator.Mediator.State;
+using Telegram.Bot.Mediator.Abstractions;
+using Telegram.Bot.Mediator.State;
 
 namespace Telegram.Bot.Mediator.Extensions
 {

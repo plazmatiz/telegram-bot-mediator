@@ -1,4 +1,4 @@
-namespace Telegram.Bot.Mediator.Mediator.Attributes;
+namespace Telegram.Bot.Mediator.Attributes;
 
 /// <summary>
 /// Base attribute for Telegram bot update handlers.

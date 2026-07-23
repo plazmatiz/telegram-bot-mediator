@@ -1,7 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Moq;
-using Telegram.Bot.Mediator.Mediator.State;
+using Telegram.Bot.Mediator.State;
 using Telegram.Bot.Types;
 using Xunit;
 
