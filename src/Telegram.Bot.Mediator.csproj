@@ -5,7 +5,7 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>1.0.0</Version>
-    <PackageId>Telegram.Bot.Mediator</PackageId>
+    <PackageId>Tg.Bot.Mediator</PackageId>
     <Authors>PLAZMATIZ</Authors>
     <Description>A lightweight state-based mediator library for Telegram.Bot in .NET. It automates routing of commands, text messages, and callback queries to separate controllers based on user states (FSM) and supports scoped dependency injection.</Description>
   </PropertyGroup>
