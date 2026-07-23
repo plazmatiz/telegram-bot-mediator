@@ -5,13 +5,22 @@
     <Nullable>enable</Nullable>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>1.0.0</Version>
-    <PackageId>Tg.Bot.Mediator</PackageId>
+    <PackageId>Telegram.Bot.Mediator</PackageId>
     <Authors>PLAZMATIZ</Authors>
     <Description>A lightweight state-based mediator library for Telegram.Bot in .NET. It automates routing of commands, text messages, and callback queries to separate controllers based on user states (FSM) and supports scoped dependency injection.</Description>
+    <RepositoryUrl>https://github.com/plazmatiz/telegram-bot-mediator</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10"/>
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10"/>
     <PackageReference Include="Telegram.Bot" Version="22.10.1"/>
+  </ItemGroup>
+  <PropertyGroup>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 </Project>
