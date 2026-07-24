@@ -1,14 +1,40 @@
-# Telegram.Bot.Mediator
+# 🤖 Telegram.Bot.Mediator
 
-A lightweight mediator library for routing incoming updates in Telegram bots on the .NET platform. It simplifies bot architecture by organizing message handling logic into separate controllers and routing updates based on user states (FSM — Finite State Machine).
+A lightweight, state-based update routing framework for Telegram bots built on .NET. It simplifies bot architecture by organizing message handling logic into separate controllers and routing updates based on user states using a Finite State Machine (FSM).
 
-## Key Features
+[![NuGet Version](https://img.shields.io/nuget/v/Telegram.Bot.Mediator.svg)](https://www.nuget.org/packages/Telegram.Bot.Mediator)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-* **Automatic Controller Discovery**: Automatically scans assemblies, registers, and configures all classes implementing `IBotController`.
-* **State-Based Routing**: Route commands, plain text, and callback queries to specific handler methods based on the user's current state.
-* **Scoped Dependency Support**: Controllers are registered with a `Scoped` lifetime, allowing safe injection of scoped services (such as Entity Framework's `DbContext`).
-* **Request Context**: Immediate access to Chat ID, User ID, and the original `Update` object via the base controller class.
-* **Built-in Lifecycle Management**: Includes a default background service using long polling to handle incoming updates.
+---
+
+### 📦 What's Inside
+
+#### Controllers
+Independent, scoped classes inheriting from `BotControllerBase` that encapsulate message handling logic. Each controller has immediate, thread-safe access to the request context (such as `ChatId`, `UserId`, and the raw `Update` object).
+
+#### State-Based Routing
+Declarative routing using attributes (`BotCommand`, `BotTextMessage`, `BotCallback`) that direct incoming messages to specific controller actions based on the user's active state in the Finite State Machine.
+
+#### Automatic Discovery
+Seamless registration using assembly scanning. The framework automatically discovers all classes implementing `IBotController` and registers them with a `Scoped` lifetime, allowing safe injection of database contexts (like EF Core `DbContext`) or other scoped services.
+
+#### Hosted Update Loop
+A default background service utilizing long polling to quickly bootstrap development, allowing your bot to handle updates with minimal boilerplate configuration.
+
+---
+
+## Table of Contents
+
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+  - [1. Define User States](#1-define-user-states-enum)
+  - [2. Create a Controller](#2-create-a-controller)
+  - [3. Register Services in Program.cs](#3-register-services-in-programcs)
+- [Advanced Concepts](#advanced-concepts)
+  - [Accessing Request Context](#accessing-request-context)
+  - [Custom State Storage](#custom-state-storage)
+  - [Custom Update Loop (Manual Routing)](#custom-lifecycle-and-update-customization)
+- [License](#license)
 
 ---
 
@@ -17,9 +43,8 @@ A lightweight mediator library for routing incoming updates in Telegram bots on 
 Install the package via .NET CLI:
 
 ```bash
-dotnet add package MyBot.Mediator
+dotnet add package Telegram.Bot.Mediator
 ```
-*(Replace `MyBot.Mediator` with your actual package ID after publishing)*
 
 ---
 
@@ -62,6 +87,7 @@ public class RegistrationController : BotControllerBase
     [BotCommand("/start", UserState.Idle)]
     public async Task StartCommand(ITelegramBotClient bot, CancellationToken ct)
     {
+        // ChatId and UserId are properties inherited from BotControllerBase
         await bot.SendTextMessageAsync(ChatId, "Hello! Please enter your name:", cancellationToken: ct);
         
         // Transition user to the next state
@@ -112,12 +138,63 @@ builder.Services.AddTelegramMediator<UserState>();
 builder.Services.AddTelegramBotHostedService<UserState>();
 
 var host = builder.Build();
-host.Run();
+await host.RunAsync();
 ```
 
 ---
 
-## Custom Lifecycle and Update Customization
+## Advanced Concepts
+
+### Accessing Request Context
+
+When inheriting from `BotControllerBase`, the following context properties are automatically resolved for each incoming update:
+
+* `ChatId` - The ID of the chat where the event occurred.
+* `UserId` - The Telegram user ID who initiated the interaction.
+* `Update` - The original raw `Update` object received from the Telegram API.
+
+This avoids writing repetitive boilerplate code to manually parse updates inside controller actions.
+
+### Custom State Storage
+
+By default, `AddTelegramMediator<TState>` registers `InMemoryStateStorage<TState>`, which stores states in volatile memory. If your application restarts, active user states will be lost.
+
+To persist states in a database (such as PostgreSQL, SQL Server, or Redis), implement the `IUserStateStorage<TState>` interface:
+
+```csharp
+using Telegram.Bot.Mediator.Mediator.State;
+
+public class MyDatabaseStateStorage : IUserStateStorage<UserState>
+{
+    // Inject your DbContext, Redis multiplexer, or cache client here
+    public MyDatabaseStateStorage() { }
+
+    public async Task<UserState> GetStateAsync(long userId, CancellationToken ct = default)
+    {
+        // Fetch and return the state from your persistent store.
+        // Return default state (e.g. UserState.Idle) if no record is found.
+        return UserState.Idle; 
+    }
+
+    public async Task SetStateAsync(long userId, UserState state, CancellationToken ct = default)
+    {
+        // Save the state associated with the given userId
+    }
+
+    public async Task ClearStateAsync(long userId, CancellationToken ct = default)
+    {
+        // Remove or reset the state for the given userId
+    }
+}
+```
+
+Register your custom storage implementation as a singleton in `Program.cs`:
+
+```csharp
+builder.Services.AddSingleton<IUserStateStorage<UserState>, MyDatabaseStateStorage>();
+```
+
+### Custom Lifecycle and Update Customization
 
 The default background service registered via `AddTelegramBotHostedService<TState>` polls for updates with standard configurations (restricted to `UpdateType.Message` and `UpdateType.CallbackQuery`).
 
@@ -148,16 +225,6 @@ public class CustomUpdateReceiver
 ```
 
 ---
-
-## User State Management
-
-By default, `AddTelegramMediator<TState>` registers `InMemoryStateStorage<TState>`, which stores states in volatile memory. If your application restarts, all active user states will be lost.
-
-To persist states in a database (such as PostgreSQL, SQL Server, or Redis), implement the `IUserStateStorage<TState>` interface and register your implementation as a singleton before or after calling `AddTelegramMediator`:
-
-```csharp
-builder.Services.AddSingleton<IUserStateStorage<UserState>, MyDatabaseStateStorage>();
-```
 
 ## License
 
