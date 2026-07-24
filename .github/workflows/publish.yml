@@ -4,10 +4,34 @@ on:
   push:
     branches:
       - main
+  release:
+    types: [published]
   workflow_dispatch:
 
 jobs:
-  test-and-publish:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '10.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore Telegram.Bot.Mediator.slnx
+
+    - name: Build Solution
+      run: dotnet build Telegram.Bot.Mediator.slnx --configuration Release --no-restore
+
+    - name: Run Tests
+      run: dotnet test Telegram.Bot.Mediator.slnx --configuration Release --no-build --verbosity normal
+
+  publish:
+    needs: test
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     permissions:
@@ -29,8 +53,18 @@ jobs:
     - name: Build Solution
       run: dotnet build Telegram.Bot.Mediator.slnx --configuration Release --no-restore
 
-    - name: Run Tests
-      run: dotnet test Telegram.Bot.Mediator.slnx --configuration Release --no-build --verbosity normal
+    - name: Set Package Version
+      id: version
+      run: |
+        VERSION="1.0.${{ github.run_number }}"
+        
+        if [ "${{ github.event_name }}" = "release" ]; then
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          VERSION="${TAG_NAME#v}" # Видаляє символ 'v' на початку, якщо він є
+        fi
+        
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Determined package version: $VERSION"
 
     - name: Pack Library
       run: |
@@ -38,7 +72,7 @@ jobs:
           --configuration Release \
           --no-build \
           -o out \
-          /p:PackageVersion=1.0.${{ github.run_number }}
+          /p:PackageVersion=${{ steps.version.outputs.version }}
 
     - name: NuGet login (OIDC → temp API key)
       uses: NuGet/login@v1
