@@ -2,7 +2,6 @@ using System.Collections;
 using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Telegram.Bot;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
 using Telegram.Bot.Mediator.Abstractions;
@@ -101,19 +100,23 @@ public class BotMediator<TState> where TState : struct, Enum
         var message = update.Message!;
         var text = message.Text!.Trim();
 
-        // 1. Try to match as a slash command first (e.g., /start or /set_text start_welcome ...)
+        // Extract the command token (the first word)
+        var firstWord = text.Split(' ')[0];
+
+        // Handle bot username in commands (e.g. /start@MyBot -> /start)
+        var commandToken = firstWord.Split('@')[0];
+
+        // 1. Try to match as a slash command first
         var matchedCommand = _handlers
             .Where(h => h.Attribute is BotCommandAttribute cmd &&
-                        (text.Equals(cmd.Command, StringComparison.OrdinalIgnoreCase) ||
-                         text.StartsWith(cmd.Command + " ", StringComparison.OrdinalIgnoreCase)))
+                        commandToken.Equals(cmd.Command, StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(h => h.Attribute.RequiredState != null)
             .FirstOrDefault(h => MatchState(h.Attribute.RequiredState, currentState));
 
         if (matchedCommand != null)
         {
-            var cmdAttr = (BotCommandAttribute)matchedCommand.Attribute;
-            var parameter = text.Length > cmdAttr.Command.Length
-                ? text[cmdAttr.Command.Length..].Trim()
+            var parameter = text.Length > firstWord.Length
+                ? text[firstWord.Length..].Trim()
                 : string.Empty;
 
             _logger.LogInformation("Route matched command handler: {Controller}.{Method} with parameters: '{Params}'",
@@ -123,7 +126,15 @@ public class BotMediator<TState> where TState : struct, Enum
             return;
         }
 
-        // 2. Generic text handler (prioritises exact state handlers over null-state fallbacks)
+        // 2. Automatically isolate commands from BotTextMessage.
+        // If message starts with '/' but did not match any command above, we ignore it for generic text handlers.
+        if (text.StartsWith('/'))
+        {
+            _logger.LogWarning("No command routing matched for incoming command: '{Text}' under state: '{State}'", text, currentState?.ToString() ?? "null");
+            return;
+        }
+
+        // 3. Generic text handler (prioritises exact state handlers over null-state fallbacks)
         var matchedTextHandler = _handlers
             .Where(h => h.Attribute is BotTextMessageAttribute)
             .OrderByDescending(h => h.Attribute.RequiredState != null)
@@ -138,7 +149,7 @@ public class BotMediator<TState> where TState : struct, Enum
         }
         else
         {
-            _logger.LogWarning("No text/command routing matched for input: '{Text}' under state: '{State}'", text, currentState?.ToString() ?? "null");
+            _logger.LogWarning("No text routing matched for input: '{Text}' under state: '{State}'", text, currentState?.ToString() ?? "null");
         }
     }
 
