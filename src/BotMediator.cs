@@ -100,16 +100,14 @@ public class BotMediator<TState> where TState : struct, Enum
         var message = update.Message!;
         var text = message.Text!.Trim();
 
-        // Extract the command token (the first word)
-        var firstWord = text.Split(' ')[0];
+        var firstWord = text.Split(new[] { ' ', '\u00A0', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries)[0];
 
-        // Handle bot username in commands (e.g. /start@MyBot -> /start)
         var commandToken = firstWord.Split('@')[0];
 
         // 1. Try to match as a slash command first
         var matchedCommand = _handlers
             .Where(h => h.Attribute is BotCommandAttribute cmd &&
-                        commandToken.Equals(cmd.Command, StringComparison.OrdinalIgnoreCase))
+                        commandToken.TrimStart('/').Equals(cmd.Command.TrimStart('/'), StringComparison.OrdinalIgnoreCase))
             .OrderByDescending(h => h.Attribute.RequiredState != null)
             .FirstOrDefault(h => MatchState(h.Attribute.RequiredState, currentState));
 
